@@ -4,4 +4,4 @@ class Builder(object):
         self.input_size = input_size
 
     def load(self):
-        pass
+        raise NotImplementedError()
