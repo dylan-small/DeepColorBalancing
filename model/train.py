@@ -5,6 +5,8 @@ import torch
 import os
 from torch import nn
 from datetime import datetime
+import matplotlib.pyplot as plt
+
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
@@ -29,6 +31,8 @@ def train(epoch, data_loader, model, optimizer, criterion):
 
     losses = AverageMeter()
 
+    l = []
+
     for idx, (data, target) in enumerate(data_loader):
 
         data = data.type(torch.FloatTensor)
@@ -41,6 +45,7 @@ def train(epoch, data_loader, model, optimizer, criterion):
         optimizer.zero_grad()
         out = model(data)
         loss = criterion(out, target)
+        l.append(float(loss))
         loss.backward()
         optimizer.step()
 
@@ -51,6 +56,7 @@ def train(epoch, data_loader, model, optimizer, criterion):
                    'Loss {loss.val:.4f} ({loss.avg:.4f})\t')
                   .format(epoch, idx, len(data_loader), loss=losses))
 
+    return l
 
 def validate(epoch, test_loader, model, criterion):
 
@@ -97,14 +103,21 @@ def main():
     criterion = nn.MSELoss()
 
     optimizer = torch.optim.Adam(model.parameters(), lr, weight_decay=reg)
-
+    losses = []
     for epoch in range(epochs):
 
         # train loop
-        train(epoch, train_loader, model, optimizer, criterion)
-
+        losses += train(epoch, train_loader, model, optimizer, criterion)
+        # losses
         # validation loop
         # validate(epoch, test_loader, model, criterion)
     if not os.path.exists('./model_weights/'):
         os.makedirs('./model_weights/')
+
+    plt.plot(losses)
+    plt.xlabel('Batch Iterations')
+    plt.ylabel('Loss')
+    plt.show()
+
+    torch.save(model.state_dict(), './model_weights/' + model_name + '.pth')
     torch.save(model.state_dict(), f'./model_weights/{model_name}{datetime.now().strftime("%m-%d-%y-%H-%M-%S")}.pth')
