@@ -1,6 +1,9 @@
 dataset
-images
+images*
 *.zip
+*.jpg
+*.png
+*.jpeg
 model_weights/
 # Byte-compiled / optimized / DLL files
 __pycache__/
