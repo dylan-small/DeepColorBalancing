@@ -4,7 +4,7 @@ import requests
 from multiprocessing.dummy import Pool
 
 
-# os.system('wget https://unsplash.com/data/lite/latest -O dataset.zip && mkdir dataset && unzip dataset.zip -d dataset')
+os.system('wget https://unsplash.com/data/lite/latest -O dataset.zip && mkdir dataset && unzip dataset.zip -d dataset')
 
 df = pd.read_csv('./dataset/photos.tsv000', sep='\t', header=0)
 
