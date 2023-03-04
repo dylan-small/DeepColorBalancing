@@ -9,7 +9,6 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 
-
 def convert(image, conversions):
     if conversions is None:
         return image
@@ -41,6 +40,8 @@ class ImageDataLoader:
         radius = 128
         self.std = radius / stdRadius
 
+    def __len__(self):
+        return len(self.dataset)
     def __iter__(self):
         return self
 
@@ -85,14 +86,18 @@ class ImageDataLoader:
             X.append(transformed)
             y.append(label)
             self.i += 1
-        return torch.from_numpy(np.stack(X).astype(int)).permute(0,3,1,2), torch.stack(y)
-
+        return torch.from_numpy(np.stack(X)).permute(0, 3, 1, 2), torch.stack(y)
 
 if __name__ == '__main__':
     loader = ImageDataLoader((128, 128), space='XYZ')
     for X, y in loader:
         for i in range(len(X)):
             plt.imshow(X[i].permute(1,2,0))
+            plt.show()
+            second = np.ones((50,100,3)).astype(np.float32)
+            second[:,:50,:] = 0.5
+            second[:,50:,:] *= y[i].numpy()
+            plt.imshow(second)
             plt.show()
             # print(batch[1][i])
         print(X, y)

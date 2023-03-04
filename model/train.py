@@ -1,6 +1,8 @@
-from MainModel import Model
-from pretrained import Beit, CustomModel, Resnet, ViT
+from .MainModel import PretrainedModel, CustomModel
+from .modules import Beit, CustomCNN, Resnet, ViT
+from loader.Dataloader import ImageDataLoader
 import torch
+import os
 from torch import nn
 
 
@@ -28,6 +30,9 @@ def train(epoch, data_loader, model, optimizer, criterion):
     losses = AverageMeter()
 
     for idx, (data, target) in enumerate(data_loader):
+
+        data = data.type(torch.FloatTensor)
+        target = target.type(torch.FloatTensor)
 
         if torch.cuda.is_available():
             data = data.cuda()
@@ -68,28 +73,28 @@ def validate(epoch, test_loader, model, criterion):
 
 def main():
     batch_size = 32
-    model_name = 'ViT'
+    model_name = 'Custom'
     lr = 0.001
     momentum = 0.9
     reg = 0.0001
     epochs = 2
 
     if model_name == 'ViT':
-        pretrained_model = ViT.ViTBuilder((224, 224))
+        model = PretrainedModel(ViT.ViTBuilder((224, 224)))
     elif model_name == 'Beit':
-        pretrained_model = Beit.BeitBuilder((224, 224))
+        model = PretrainedModel(Beit.BeitBuilder((224, 224)))
     elif model_name == 'Resnet':
-        pretrained_model = Resnet.ResnetBuilder((224, 224))
-
-    model = Model(pretrained_model)
+        model = PretrainedModel(Resnet.ResnetBuilder((224, 224)))
+    elif model_name == 'Custom':
+        model = CustomModel(CustomCNN.CustomCNNBuilder((256, 256)))
 
     print(model)
     if torch.cuda.is_available():
         model = model.cuda()
 
-    train_loader = DataLoader(input_size=model.input_size,dataset=train_dataset, batch_size=batch_size, shuffle=True)
+    train_loader = ImageDataLoader(model.input_size, batch_size=8)
 
-    test_loader = DataLoader(input_size=model.input_size, dataset=test_dataset, batch_size=100, shuffle=False)
+    # test_loader = DataLoader(input_size=model.input_size, dataset=test_dataset, batch_size=100, shuffle=False)
 
     criterion = nn.MSELoss()
 
@@ -103,6 +108,7 @@ def main():
         train(epoch, train_loader, model, optimizer, criterion)
 
         # validation loop
-        validate(epoch, test_loader, model, criterion)
-
+        # validate(epoch, test_loader, model, criterion)
+    if not os.path.exists('./model_weights/'):
+        os.makedirs('./model_weights/')
     torch.save(model.state_dict(), './model_weights/' + model_name + '.pth')

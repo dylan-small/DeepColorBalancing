@@ -1,6 +1,5 @@
-from model.pretrained.ViT import ViTBuilder
-from model.MainModel import Model
+from model.train import main
 
-vit = ViTBuilder((224, 224))
-model = Model(vit)
+if __name__ == "__main__":
+    main()
 
