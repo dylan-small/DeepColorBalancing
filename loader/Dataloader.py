@@ -37,6 +37,10 @@ class ImageDataLoader:
             self.grey = np.array([20.52,21.59,23.51])
             self.labToSpace = [cv2.COLOR_LAB2RGB, cv2.COLOR_RGB2XYZ]
 
+        stdRadius = 5
+        radius = 128
+        self.std = radius / stdRadius
+
     def __iter__(self):
         return self
 
@@ -46,9 +50,9 @@ class ImageDataLoader:
         imageInSpace = imageInSpace.astype(np.float32)
         h, w, c = imageInSpace.shape
 
-        temp = np.random.random() * 50 - 25
-        tint = np.random.random() * 50 - 25
-        filt = np.array([53.59, temp, tint]).astype(np.float32)
+        temp = np.random.normal(0, self.std)
+        tint = np.random.normal(0, self.std)
+        filt = np.array([50, temp, tint]).astype(np.float32)
 
         if self.labToSpace is not None:
             filtInSpace = convert(filt.reshape(1,1,c), self.labToSpace).reshape(c)
@@ -81,13 +85,17 @@ class ImageDataLoader:
             X.append(transformed)
             y.append(label)
             self.i += 1
-        return torch.from_numpy(np.stack(X)).permute(0,3,1,2), torch.stack(y)
+        return torch.from_numpy(np.stack(X).astype(int)).permute(0,3,1,2), torch.stack(y)
 
 
 if __name__ == '__main__':
     loader = ImageDataLoader((128, 128), space='XYZ')
-    for batch in loader:
-        print(batch)
+    for X, y in loader:
+        for i in range(len(X)):
+            plt.imshow(X[i].permute(1,2,0))
+            plt.show()
+            # print(batch[1][i])
+        print(X, y)
     # print(len(loader))
     # print(loader[0])
     # print(loader[-1])
