@@ -9,6 +9,16 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 
+
+def convert(image, conversions):
+    if conversions is None:
+        return image
+    if type(conversions) is not list:
+        return cv2.cvtColor(image, conversions)
+    for conversion in conversions:
+        image = cv2.cvtColor(image, conversion)
+    return image
+
 class ImageDataLoader:
     def __init__(self, inputShape, space='RGB', batch_size=32, shuffle=True):
         self.dataset = ImageDataset(inputShape, shuffle=shuffle)
@@ -16,24 +26,23 @@ class ImageDataLoader:
         self.space = space
         self.i = 0
         self.channelOffset = 0
-        if space == 'LAB':
-            self.colorTransform = cv2.COLOR_RGB2LAB
-            self.colorTransformInverse = cv2.COLOR_LAB2RGB
-            self.channelOffset = np.array([0, 128, 128])
-            self.grey = np.array([53.59, 128, 128])
-            self.labToSpace = None
         if space == 'RGB':
             self.colorTransform = None
             self.colorTransformInverse = None
             self.grey = np.array([128,128,128]) / 255
             self.labToSpace = cv2.COLOR_LAB2RGB
+        elif space == 'XYZ':
+            self.colorTransform = cv2.COLOR_RGB2XYZ
+            self.colorTransformInverse = cv2.COLOR_XYZ2RGB
+            self.grey = np.array([20.52,21.59,23.51])
+            self.labToSpace = [cv2.COLOR_LAB2RGB, cv2.COLOR_RGB2XYZ]
 
     def __iter__(self):
         return self
 
     def transform(self, image):
 
-        imageInSpace = cv2.cvtColor(image, self.colorTransform) if self.colorTransform is not None else image
+        imageInSpace = convert(image, self.colorTransform)
         imageInSpace = imageInSpace.astype(np.float32)
         h, w, c = imageInSpace.shape
 
@@ -42,7 +51,7 @@ class ImageDataLoader:
         filt = np.array([53.59, temp, tint]).astype(np.float32)
 
         if self.labToSpace is not None:
-            filtInSpace = cv2.cvtColor(filt.reshape(1,1,c), self.labToSpace).reshape(c)
+            filtInSpace = convert(filt.reshape(1,1,c), self.labToSpace).reshape(c)
         else:
             filtInSpace = filt
 
@@ -52,9 +61,9 @@ class ImageDataLoader:
         imageInSpace *= scalar
         imageInSpace -= self.channelOffset
 
-        rgbOut = cv2.cvtColor(image, self.colorTransformInverse) if self.colorTransformInverse is not None else imageInSpace
+        rgbOut = convert(imageInSpace, self.colorTransformInverse)
 
-        y = torch.from_numpy(cv2.cvtColor(filt.reshape(1,1,3), cv2.COLOR_LAB2RGB).reshape(3))
+        y = torch.from_numpy(convert(filt.reshape(1,1,c), cv2.COLOR_LAB2RGB).reshape(c))
 
         return rgbOut, y
 
@@ -76,7 +85,7 @@ class ImageDataLoader:
 
 
 if __name__ == '__main__':
-    loader = ImageDataLoader((128, 128))
+    loader = ImageDataLoader((128, 128), space='XYZ')
     for batch in loader:
         print(batch)
     # print(len(loader))
