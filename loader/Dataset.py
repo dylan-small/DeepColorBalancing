@@ -2,6 +2,8 @@ from torch.utils.data import Dataset
 import os
 from PIL import Image
 import multiprocess as mp
+import random
+import cv2
 
 def resizeImages(baseDir, newDir, imageShape):
     paths = os.listdir(baseDir)
@@ -17,7 +19,8 @@ def resizeImages(baseDir, newDir, imageShape):
 
 
 class ImageDataset(Dataset):
-    def __init__(self, inputShape):
+    def __init__(self, inputShape, shuffle=False):
+        self.inputShape = inputShape
         h, w = inputShape
         baseDir = os.path.join(os.path.dirname(__file__), f'../data/images')
         self.imageDir = os.path.join(os.path.dirname(__file__), f'../data/images_{h}x{w}')
@@ -26,12 +29,15 @@ class ImageDataset(Dataset):
             os.makedirs(self.imageDir)
             resizeImages(baseDir, self.imageDir, inputShape)
         self.names = os.listdir(self.imageDir)
+        if shuffle:
+            random.shuffle(self.names)
 
     def __len__(self):
         return len(self.names)
 
     def __getitem__(self, i):
-        return Image.open(os.path.join(self.imageDir, self.names[i]))
+        img = cv2.imread(os.path.join(self.imageDir, self.names[i]))
+        return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
 if __name__ == '__main__':
     dataset = ImageDataset((128, 128))
