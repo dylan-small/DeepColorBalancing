@@ -94,6 +94,11 @@ if __name__ == '__main__':
         for i in range(len(X)):
             plt.imshow(X[i].permute(1,2,0))
             plt.show()
+            second = np.ones((50,100,3)).astype(np.float32)
+            second[:,:50,:] = 0.5
+            second[:,50:,:] *= y[i].numpy()
+            plt.imshow(second)
+            plt.show()
             # print(batch[1][i])
         print(X, y)
     # print(len(loader))
