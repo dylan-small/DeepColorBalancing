@@ -10,54 +10,53 @@ import cv2
 import matplotlib.pyplot as plt
 
 class ImageDataLoader:
-    def __init__(self, inputShape, space='LAB', batch_size=32, shuffle=True):
+    def __init__(self, inputShape, space='RGB', batch_size=32, shuffle=True):
         self.dataset = ImageDataset(inputShape, shuffle=shuffle)
         self.batch_size = batch_size
         self.space = space
         self.i = 0
-        # self.inProfile = ImageCms.createProfile(
-        #     colorSpace='RGB')
-        # self.outProfile = ImageCms.createProfile(
-        #     colorSpace=self.space)
-        # self.colorTransform = ImageCms.buildTransform(
-        #     inputProfile=self.inProfile,
-        #     outputProfile=self.outProfile,
-        #     inMode='RGB',
-        #     outMode=space
-        # )
+        self.channelOffset = 0
         if space == 'LAB':
             self.colorTransform = cv2.COLOR_RGB2LAB
             self.colorTransformInverse = cv2.COLOR_LAB2RGB
-            self.imgOffset = np.array([0, 128, 128])
+            self.channelOffset = np.array([0, 128, 128])
+            self.grey = np.array([53.59, 128, 128])
             self.labToSpace = None
+        if space == 'RGB':
+            self.colorTransform = None
+            self.colorTransformInverse = None
+            self.grey = np.array([128,128,128]) / 255
+            self.labToSpace = cv2.COLOR_LAB2RGB
 
     def __iter__(self):
         return self
 
     def transform(self, image):
 
-        # imageSpace = ImageCms.applyTransform(
-        #     im=image,
-        #     transform=self.colorTransform
-        # )
+        imageInSpace = cv2.cvtColor(image, self.colorTransform) if self.colorTransform is not None else image
+        imageInSpace = imageInSpace.astype(np.float32)
+        h, w, c = imageInSpace.shape
 
-        # imageSpace = cv2.cvtColor(image, self.colorTransform)
+        temp = np.random.random() * 50 - 25
+        tint = np.random.random() * 50 - 25
+        filt = np.array([53.59, temp, tint]).astype(np.float32)
 
-        # imagePositive = imageSpace + self.imgOffset
+        if self.labToSpace is not None:
+            filtInSpace = cv2.cvtColor(filt.reshape(1,1,c), self.labToSpace).reshape(c)
+        else:
+            filtInSpace = filt
 
+        imageInSpace += self.channelOffset
+        scalar = filtInSpace / self.grey
+        scalar /= np.sum(scalar) / c
+        imageInSpace *= scalar
+        imageInSpace -= self.channelOffset
 
+        rgbOut = cv2.cvtColor(image, self.colorTransformInverse) if self.colorTransformInverse is not None else imageInSpace
 
-        X = image
-        # imageLab = color.rgb_to_lab(image)
+        y = torch.from_numpy(cv2.cvtColor(filt.reshape(1,1,3), cv2.COLOR_LAB2RGB).reshape(3))
 
-        # temp = np.random.random() - 0.5
-        # tint = np.random.random() - 0.5
-
-        # offWhite = np.array([1, ])
-
-        y = torch.tensor([0,0,0])
-
-        return X, y
+        return rgbOut, y
 
     def __next__(self):
         if self.i >= len(self.dataset):
@@ -73,7 +72,7 @@ class ImageDataLoader:
             X.append(transformed)
             y.append(label)
             self.i += 1
-        return torch.from_numpy(np.stack(X).permute(0,3,1,2)), torch.stack(y)
+        return torch.from_numpy(np.stack(X)).permute(0,3,1,2), torch.stack(y)
 
 
 if __name__ == '__main__':
