@@ -41,7 +41,7 @@ class ImageDataLoader:
         self.std = radius / stdRadius
 
     def __len__(self):
-        return len(self.dataset)
+        return len(self.dataset) // self.batch_size
     def __iter__(self):
         return self
 
