@@ -119,5 +119,4 @@ def main():
     plt.ylabel('Loss')
     plt.show()
 
-    torch.save(model.state_dict(), './model_weights/' + model_name + '.pth')
     torch.save(model.state_dict(), f'./model_weights/{model_name}{datetime.now().strftime("%m-%d-%y-%H-%M-%S")}.pth')
