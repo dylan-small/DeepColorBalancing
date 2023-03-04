@@ -72,10 +72,8 @@ def validate(epoch, test_loader, model, criterion):
 
 
 def main():
-    batch_size = 32
     model_name = 'Custom'
     lr = 0.001
-    momentum = 0.9
     reg = 0.0001
     epochs = 2
 
@@ -98,9 +96,7 @@ def main():
 
     criterion = nn.MSELoss()
 
-    optimizer = torch.optim.SGD(model.parameters(), lr,
-                                momentum=momentum,
-                                weight_decay=reg)
+    optimizer = torch.optim.Adam(model.parameters(), lr, weight_decay=reg)
 
     for epoch in range(epochs):
 
