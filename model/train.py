@@ -4,7 +4,7 @@ from loader.Dataloader import ImageDataLoader
 import torch
 import os
 from torch import nn
-
+from datetime import datetime
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
@@ -107,4 +107,4 @@ def main():
         # validate(epoch, test_loader, model, criterion)
     if not os.path.exists('./model_weights/'):
         os.makedirs('./model_weights/')
-    torch.save(model.state_dict(), './model_weights/' + model_name + '.pth')
+    torch.save(model.state_dict(), f'./model_weights/{model_name}{datetime.now().strftime("%m-%d-%y-%H-%M-%S")}.pth')
