@@ -76,6 +76,8 @@ class ImageDataLoader:
         if self.i >= len(self.dataset):
             self.i = 0
             raise StopIteration
+        if self.i == 0:
+            self.dataset.shuffle()
         X = []
         y = []
         for j in range(self.batch_size):

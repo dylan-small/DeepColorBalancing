@@ -29,8 +29,12 @@ class ImageDataset(Dataset):
             os.makedirs(self.imageDir)
             resizeImages(baseDir, self.imageDir, inputShape)
         self.names = os.listdir(self.imageDir)
-        if shuffle:
-            random.shuffle(self.names)
+        self.shouldShuffle = shuffle
+        self.shuffle()
+
+    def shuffle(self):
+        if self.shouldShuffle:
+            self.names = random.shuffle(self.names)
 
     def __len__(self):
         return len(self.names)
