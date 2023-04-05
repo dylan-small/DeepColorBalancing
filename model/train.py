@@ -77,11 +77,8 @@ def validate(epoch, test_loader, model, criterion):
                   .format(epoch, idx, len(test_loader), loss=losses))
 
 
-def main():
-    model_name = 'Custom'
-    lr = 0.001
-    reg = 0.0001
-    epochs = 2
+def main(model_name = 'Custom', lr = 0.001, reg = 0.0001, epochs = 2):
+
 
     if model_name == 'ViT':
         model = PretrainedModel(ViT.ViTBuilder((224, 224)))
