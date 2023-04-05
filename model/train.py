@@ -1,9 +1,9 @@
+from criteria.Criterion import Criterion
 from .MainModel import PretrainedModel, CustomModel
 from .modules import Beit, CustomCNN, Resnet, ViT
 from loader.Dataloader import ImageDataLoader
 import torch
 import os
-from torch import nn
 from datetime import datetime
 import matplotlib.pyplot as plt
 
@@ -27,11 +27,15 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
 
 
-def train(epoch, data_loader, model, optimizer, criterion):
+def train_validate(epoch, data_loader, model, optimizer, criterion):
 
-    losses = AverageMeter()
+    model.train()
+    train_losses = AverageMeter()
+    val_losses = AverageMeter()
 
-    l = []
+    train_l = []
+    val_l = []
+    split = int(0.75 * len(data_loader))
 
     for idx, (data, target) in enumerate(data_loader):
 
@@ -42,44 +46,37 @@ def train(epoch, data_loader, model, optimizer, criterion):
             data = data.cuda()
             target = target.cuda()
 
-        optimizer.zero_grad()
-        out = model(data)
-        loss = criterion(out, target)
-        l.append(float(loss))
-        loss.backward()
-        optimizer.step()
-
-        losses.update(loss, out.shape[0])
-
-        if idx % 10 == 0:
-            print(('Epoch: [{0}][{1}/{2}]\t'
-                   'Loss {loss.val:.4f} ({loss.avg:.4f})\t')
-                  .format(epoch, idx, len(data_loader), loss=losses))
-
-    return l
-
-def validate(epoch, test_loader, model, criterion):
-
-    losses = AverageMeter()
-    for idx, (data, target) in enumerate(test_loader):
-        if torch.cuda_is_available():
-            data = data.cuda()
-            target = target.cuda()
-        with torch.no_grad():
+        if idx > split:
+            with torch.no_grad():
+                out = model(data)
+                loss = criterion(out, target)
+                val_l.append(float(loss))
+                val_losses.update(loss, out.shape[0])
+        else:
+            optimizer.zero_grad()
             out = model(data)
             loss = criterion(out, target)
+            loss.backward()
+            optimizer.step()
+            train_l.append(float(loss))
+            train_losses.update(loss, out.shape[0])
 
-        losses.update(loss, out.shape[0])
+        if idx % 1 == 0:
+            if idx > split:
+                print(('(Validation)\t'
+                       'Epoch: [{0}][{1}/{2}]\t'
+                       'Loss {loss.val:.4f} ({loss.avg:.4f})\t')
+                      .format(epoch, idx, len(data_loader), loss=val_losses))
+            else:
+                print(('(Training)\t'
+                       'Epoch: [{0}][{1}/{2}]\t'
+                       'Loss {loss.val:.4f} ({loss.avg:.4f})\t')
+                      .format(epoch, idx, len(data_loader), loss=train_losses))
 
-        if idx % 10 == 0:
-            print(('Validation\n: Epoch: [{0}][{1}/{2}]\t'
-                   'Loss {loss.val:.4f} ({loss.avg:.4f})\t')
-                  .format(epoch, idx, len(test_loader), loss=losses))
+    return train_l, val_l
 
-
-def main(model_name = 'Custom', lr = 0.001, reg = 0.0001, epochs = 2):
-
-
+def main(model_name='Custom', lr=0.001, reg=0.0001, epochs=2, inputColorSpace='RGB', criterionColorSpace='RGB',
+         loss='RMSE'):
     if model_name == 'ViT':
         model = PretrainedModel(ViT.ViTBuilder((224, 224)))
     elif model_name == 'Beit':
@@ -93,27 +90,21 @@ def main(model_name = 'Custom', lr = 0.001, reg = 0.0001, epochs = 2):
     if torch.cuda.is_available():
         model = model.cuda()
 
-    train_loader = ImageDataLoader(model.input_size, batch_size=8)
+    data_loader = ImageDataLoader(model.input_size, space=inputColorSpace, batch_size=8)
 
-    # test_loader = DataLoader(input_size=model.input_size, dataset=test_dataset, batch_size=100, shuffle=False)
-
-    criterion = nn.MSELoss()
+    criterion = Criterion(loss=loss, space=criterionColorSpace)
 
     optimizer = torch.optim.Adam(model.parameters(), lr, weight_decay=reg)
-    losses = []
+    train_losses = []
+    test_losses = []
     for epoch in range(epochs):
-
         # train loop
-        losses += train(epoch, train_loader, model, optimizer, criterion)
-        # losses
+        new_train_losses, new_val_losses = train_validate(epoch, data_loader, model, optimizer, criterion)
+        train_losses += new_train_losses
+        test_losses += new_val_losses
         # validation loop
-        # validate(epoch, test_loader, model, criterion)
     if not os.path.exists('./model_weights/'):
         os.makedirs('./model_weights/')
 
-    plt.plot(losses)
-    plt.xlabel('Batch Iterations')
-    plt.ylabel('Loss')
-    plt.show()
-
     torch.save(model.state_dict(), f'./model_weights/{model_name}{datetime.now().strftime("%m-%d-%y-%H-%M-%S")}.pth')
+    return train_losses, test_losses, train_losses, test_losses

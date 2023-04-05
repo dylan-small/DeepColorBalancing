@@ -6,7 +6,7 @@ from datetime import datetime
 import pandas as pd
 
 # if __name__ == "__main__":
-#     main()
+#      main()
 
 models = ['ViT', 'Beit', 'Resnet', 'Custom']
 inputColorSpaces = ['RGB', 'XYZ']
@@ -25,7 +25,7 @@ if __name__ == '__main__':
                     print(f"Running {model} with augmentation color space {inputColorSpace} and criterion color space {criterion} and loss {criterion}")
                     # main should return final loss
                     start = time.time()
-                    trainLosses, testLosses, trainAccuracies, testAccuracies = main(model_name = model, lr = 0.0001, reg = 0.0001, epochs = 2, inputColorSpace = inputColorSpace, criterionColorSpace = criterionColorSpace, loss = criterion)
+                    trainLosses, testLosses, trainAccuracies, testAccuracies = main(model_name = model, lr = 0.0001, reg = 0.0001, epochs = 5, inputColorSpace = inputColorSpace, criterionColorSpace = criterionColorSpace, loss = criterion)
                     duration = time.time() - start
 
 

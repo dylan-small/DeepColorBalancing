@@ -34,7 +34,7 @@ class ImageDataset(Dataset):
 
     def shuffle(self):
         if self.shouldShuffle:
-            self.names = random.shuffle(self.names)
+            random.shuffle(self.names)
 
     def __len__(self):
         return len(self.names)
