@@ -30,14 +30,20 @@ def rgbToHsv(rgb):
 def rgbToHue(rgb):
     return rgbToHsv(rgb)[:, 0]
 
+# def rgbToLab(rgb):
+#     # out = kornia.color.rgb_to_lab(rgb[:,:,None,None]).squeeze()
+#     transform = kornia.color.RgbToLab()
+#     out = transform(rgb[:,:,None,None]).squeeze()
+#     return out
+
 def rgbToLab(rgb):
-    if len(rgb.shape) == 1:
-        rgb = rgb[None,:]
-    # out = kornia.color.rgb_to_lab(rgb[:,:,None,None]).squeeze()
-    transform = kornia.color.RgbToLab()
-    out = transform(rgb[:,:,None,None]).squeeze()
-    if len(out.shape) == 1:
-        out = out[None,:]
+    R = rgb[:,0]
+    G = rgb[:,1]
+    B = rgb[:,2]
+    L = (13933 * R + 46871 * G + 4732 * B) / 2**16
+    A = 377 * (14503 * R - 22218 * G + 7714 * B) / 2**24 + 128
+    b = (12773 * R + 39695 * G - 52468 * B) / 2**24 + 128
+    out = torch.stack([L, A, b], dim=1)
     return out
 
 
@@ -46,7 +52,6 @@ spaces = {
     'HSV': rgbToHsv,
     'Hue': rgbToHue,
     'LAB': rgbToLab,
-    'XYZ': 1
 }
 class Criterion(nn.Module):
     def __init__(self, loss='RMSE', space='RGB'):
@@ -57,7 +62,12 @@ class Criterion(nn.Module):
         self.loss = losses[loss]
 
     def transformToSpace(self, rgb):
-        return spaces[self.space](rgb)
+        if len(rgb.shape) == 1:
+            rgb = rgb[None, :]
+        out = spaces[self.space](rgb)
+        if len(out.shape) == 1:
+            out = out[None, :]
+        return out
     def forward(self, pred, target):
         predInSpace = pred
         targetInSpace = target
