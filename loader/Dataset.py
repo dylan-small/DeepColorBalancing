@@ -19,8 +19,9 @@ def resizeImages(baseDir, newDir, imageShape):
 
 
 class ImageDataset(Dataset):
-    def __init__(self, inputShape, shuffle=False):
+    def __init__(self, inputShape, shuffle=False, maxLen=None):
         self.inputShape = inputShape
+        self.maxLen = maxLen
         h, w = inputShape
         baseDir = os.path.join(os.path.dirname(__file__), f'../data/images')
         self.imageDir = os.path.join(os.path.dirname(__file__), f'../data/images_{h}x{w}')
@@ -37,7 +38,9 @@ class ImageDataset(Dataset):
             random.shuffle(self.names)
 
     def __len__(self):
-        return len(self.names)
+        if self.maxLen is None:
+            return len(self.names)
+        return min(self.maxLen(len(self.names)), self.maxLen)
 
     def __getitem__(self, i):
         img = cv2.imread(os.path.join(self.imageDir, self.names[i]))
