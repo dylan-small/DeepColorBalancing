@@ -66,7 +66,7 @@ class ImageDataLoader:
         imageInSpace *= scalar
         imageInSpace -= self.channelOffset
 
-        rgbOut = convert(imageInSpace, self.colorTransformInverse)
+        rgbOut = convert(imageInSpace, self.colorTransformInverse).astype(int)
 
         y = torch.from_numpy(convert(filt.reshape(1,1,c), cv2.COLOR_LAB2RGB).reshape(c))
 
