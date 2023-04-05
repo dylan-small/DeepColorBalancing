@@ -1,6 +1,7 @@
 import torch.nn as nn
 import torch
 import numpy as np
+import kornia
 
 losses = {
     'RMSE': nn.MSELoss()
@@ -26,9 +27,17 @@ def rgbToHsv(rgb):
     out[:, 2] = V
     return out
 
+def rgbToHue(rgb):
+    return rgbToHsv(rgb)[:, 0]
+
+def rgbToLab(rgb):
+    return kornia.color.rgb_to_lab(rgb[:,:,None,None]).squeeze()
+
+
 spaces = {
     'RGB': None,
     'HSV': rgbToHsv,
+    'Hue': rgbToHue,
     'LAB': 1,
     'XYZ': 1
 }
@@ -56,3 +65,4 @@ if __name__ == '__main__':
     criterion = Criterion()
     colors = torch.Tensor([[0.5,0.5,0.5],[0.1,0.7,0.3]])
     rgbToHsv(colors)
+    rgbToLab(colors)
