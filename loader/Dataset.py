@@ -40,7 +40,7 @@ class ImageDataset(Dataset):
     def __len__(self):
         if self.maxLen is None:
             return len(self.names)
-        return min(self.maxLen(len(self.names)), self.maxLen)
+        return min(len(self.names), self.maxLen)
 
     def __getitem__(self, i):
         img = cv2.imread(os.path.join(self.imageDir, self.names[i]))

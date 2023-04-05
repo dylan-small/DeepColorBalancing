@@ -33,8 +33,8 @@ def train_validate(epoch, data_loader, model, optimizer, criterion):
     train_losses = AverageMeter()
     val_losses = AverageMeter()
 
-    train_l = []
-    val_l = []
+    # train_l = []
+    # val_l = []
     split = int(0.75 * len(data_loader))
 
     for idx, (data, target) in enumerate(data_loader):
@@ -47,18 +47,26 @@ def train_validate(epoch, data_loader, model, optimizer, criterion):
             target = target.cuda()
 
         if idx > split:
+            model.eval()
             with torch.no_grad():
                 out = model(data)
                 loss = criterion(out, target)
-                val_l.append(float(loss))
+                # val_l.append(float(loss))
                 val_losses.update(loss, out.shape[0])
         else:
+            model.train()
             optimizer.zero_grad()
             out = model(data)
+            if len(out.shape) == 1:
+                out = out[None,:]
             loss = criterion(out, target)
+            if not (loss > 0) and not (loss <= 0):
+                print('nan')
             loss.backward()
+            # for name, param in model.named_parameters():
+            #     print(name, torch.isfinite(param.grad).all())
             optimizer.step()
-            train_l.append(float(loss))
+            # train_l.append(float(loss))
             train_losses.update(loss, out.shape[0])
 
         if idx % 1 == 0:
@@ -73,7 +81,7 @@ def train_validate(epoch, data_loader, model, optimizer, criterion):
                        'Loss {loss.val:.4f} ({loss.avg:.4f})\t')
                       .format(epoch, idx, len(data_loader), loss=train_losses))
 
-    return train_l, val_l
+    return train_losses.avg, val_losses.avg
 
 def main(model_name='Custom', lr=0.001, reg=0.0001, epochs=2, inputColorSpace='RGB', criterionColorSpace='RGB',
          loss='RMSE'):
@@ -86,11 +94,11 @@ def main(model_name='Custom', lr=0.001, reg=0.0001, epochs=2, inputColorSpace='R
     elif model_name == 'Custom':
         model = CustomModel(CustomCNN.CustomCNNBuilder((256, 256)))
 
-    print(model)
+    #print(model)
     if torch.cuda.is_available():
         model = model.cuda()
 
-    data_loader = ImageDataLoader(model.input_size, space=inputColorSpace, batch_size=8)
+    data_loader = ImageDataLoader(model.input_size, space=inputColorSpace, batch_size=2, maxEpochSize=20)
 
     criterion = Criterion(loss=loss, space=criterionColorSpace)
 
@@ -99,9 +107,9 @@ def main(model_name='Custom', lr=0.001, reg=0.0001, epochs=2, inputColorSpace='R
     test_losses = []
     for epoch in range(epochs):
         # train loop
-        new_train_losses, new_val_losses = train_validate(epoch, data_loader, model, optimizer, criterion)
-        train_losses += new_train_losses
-        test_losses += new_val_losses
+        new_train_loss, new_val_losses = train_validate(epoch, data_loader, model, optimizer, criterion)
+        train_losses.append(float(new_train_loss))
+        test_losses.append(float(new_val_losses))
         # validation loop
     if not os.path.exists('./model_weights/'):
         os.makedirs('./model_weights/')

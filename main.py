@@ -4,13 +4,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime
 import pandas as pd
+import os
+from datetime import datetime
 
 # if __name__ == "__main__":
 #      main()
 
 models = ['ViT', 'Beit', 'Resnet', 'Custom']
 inputColorSpaces = ['RGB', 'XYZ']
-criterionColorSpaces = ['RGB', 'LAB', 'HSV', 'Hue']
+criterionColorSpaces = ['RGB', 'HSV', 'Hue']
 criteria = ['RMSE']
 
 dfName = f'results_{datetime.now()}.csv'
@@ -18,14 +20,19 @@ df = None
 
 if __name__ == '__main__':
 
+    try:
+        os.mkdir('./plots')
+    except:
+        pass
+
     for model in models:
         for inputColorSpace in inputColorSpaces:
             for criterionColorSpace in criterionColorSpaces:
                 for criterion in criteria:
-                    print(f"Running {model} with augmentation color space {inputColorSpace} and criterion color space {criterion} and loss {criterion}")
+                    print(f"Running {model} with augmentation color space {inputColorSpace} and criterion color space {criterionColorSpace} and loss {criterion}")
                     # main should return final loss
                     start = time.time()
-                    trainLosses, testLosses, trainAccuracies, testAccuracies = main(model_name = model, lr = 0.0001, reg = 0.0001, epochs = 5, inputColorSpace = inputColorSpace, criterionColorSpace = criterionColorSpace, loss = criterion)
+                    trainLosses, testLosses, trainAccuracies, testAccuracies = main(model_name = model, lr = 0.0001, reg = 0.0001, epochs = 2, inputColorSpace = inputColorSpace, criterionColorSpace = criterionColorSpace, loss = criterion)
                     duration = time.time() - start
 
 
@@ -36,9 +43,10 @@ if __name__ == '__main__':
                     plt.xlabel('Epochs')
                     plt.ylabel('Loss')
                     plt.legend()
-                    lossFilePath = f"./plots/{model}_{inputColorSpace}_{criterionColorSpace}_{criterion}_loss.png"
+                    lossFilePath = f"./plots/{model}_{inputColorSpace}_{criterionColorSpace}_{criterion}_loss_{datetime.now()}.png"
                     plt.savefig(lossFilePath)
 
+                    x = np.arange(len(trainAccuracies))
                     plt.plot(x, trainAccuracies, label='train')
                     plt.plot(x, testAccuracies, label='test')
                     plt.title(
@@ -46,7 +54,7 @@ if __name__ == '__main__':
                     plt.xlabel('Epochs')
                     plt.ylabel('Accuracy')
                     plt.legend()
-                    accFilePath = f"./plots/{model}_{inputColorSpace}_{criterionColorSpace}_{criterion}_acc.png"
+                    accFilePath = f"./plots/{model}_{inputColorSpace}_{criterionColorSpace}_{criterion}_acc_{datetime.now()}.png"
                     plt.savefig(accFilePath)
 
 
@@ -66,7 +74,7 @@ if __name__ == '__main__':
                     if df is None:
                         df = pd.DataFrame.from_records([row])
                     else:
-                        df.append(row)
+                        df = df.append(row, ignore_index=True)
                     df.to_csv(dfName)
-
+                    print('updated file')
 

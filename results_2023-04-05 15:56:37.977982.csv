@@ -1,0 +1,2 @@
+,Model,Augmentation Color Space,Criterion Color Space,Criterion,Final Train Loss,Final Test Loss,Final Train Accuracy,Final Test Accuracy,Loss Plot,Accuracy Plot
+0,ViT,RGB,RGB,RMSE,0.22827138006687164,0.1806265115737915,0.22827138006687164,0.1806265115737915,./plots/ViT_RGB_RGB_RMSE_loss_2023-04-05 15:56:42.893366.png,./plots/ViT_RGB_RGB_RMSE_acc_2023-04-05 15:56:43.001471.png

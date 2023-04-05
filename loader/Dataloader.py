@@ -19,8 +19,8 @@ def convert(image, conversions):
     return image
 
 class ImageDataLoader:
-    def __init__(self, inputShape, space='RGB', batch_size=32, shuffle=True):
-        self.dataset = ImageDataset(inputShape, shuffle=shuffle)
+    def __init__(self, inputShape, space='RGB', batch_size=32, shuffle=True, maxEpochSize=None):
+        self.dataset = ImageDataset(inputShape, shuffle=shuffle, maxLen=maxEpochSize)
         self.batch_size = batch_size
         self.space = space
         self.i = 0
