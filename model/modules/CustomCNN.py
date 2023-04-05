@@ -3,6 +3,7 @@ from ..builder.loader import Builder
 
 
 class DeepCNN(nn.Module):
+
     def __init__(self):
         super(DeepCNN, self).__init__()
         self.conv_layers = nn.Sequential(
