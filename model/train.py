@@ -69,17 +69,17 @@ def train_validate(epoch, data_loader, model, optimizer, criterion):
             # train_l.append(float(loss))
             train_losses.update(loss, out.shape[0])
 
-        if idx % 1 == 0:
+        if idx % 2 == 0 or idx == split or idx == len(data_loader) - 1:
             if idx > split:
                 print(('(Validation)\t'
                        'Epoch: [{0}][{1}/{2}]\t'
                        'Loss {loss.val:.4f} ({loss.avg:.4f})\t')
-                      .format(epoch, idx, len(data_loader), loss=val_losses))
+                      .format(epoch, idx+1, len(data_loader), loss=val_losses))
             else:
                 print(('(Training)\t'
                        'Epoch: [{0}][{1}/{2}]\t'
                        'Loss {loss.val:.4f} ({loss.avg:.4f})\t')
-                      .format(epoch, idx, len(data_loader), loss=train_losses))
+                      .format(epoch, idx+1, len(data_loader), loss=train_losses))
 
     return train_losses.avg, val_losses.avg
 
@@ -98,7 +98,7 @@ def main(model_name='Custom', lr=0.001, reg=0.0001, epochs=2, inputColorSpace='R
     if torch.cuda.is_available():
         model = model.cuda()
 
-    data_loader = ImageDataLoader(model.input_size, space=inputColorSpace, batch_size=2, maxEpochSize=20)
+    data_loader = ImageDataLoader(model.input_size, space=inputColorSpace, batch_size=32, maxEpochSize=320)
 
     criterion = Criterion(loss=loss, space=criterionColorSpace)
 
@@ -114,5 +114,5 @@ def main(model_name='Custom', lr=0.001, reg=0.0001, epochs=2, inputColorSpace='R
     if not os.path.exists('./model_weights/'):
         os.makedirs('./model_weights/')
 
-    torch.save(model.state_dict(), f'./model_weights/{model_name}{datetime.now().strftime("%m-%d-%y-%H-%M-%S")}.pth')
+    torch.save(model.state_dict(), f'./model_weights/{model_name}{datetime.now().strftime("%m-%d-%y-%H-%M-%S")}_{inputColorSpace}_{criterionColorSpace}.pth')
     return train_losses, test_losses, train_losses, test_losses

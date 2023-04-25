@@ -12,7 +12,7 @@ from datetime import datetime
 
 models = ['ViT', 'Beit', 'Resnet', 'Custom']
 inputColorSpaces = ['RGB', 'XYZ']
-criterionColorSpaces = ['RGB', 'HSV', 'Hue']
+criterionColorSpaces = ['LAB', 'RGB', 'HSV', 'Hue']
 criteria = ['RMSE']
 
 dfName = f'results_{datetime.now()}.csv'
@@ -32,11 +32,12 @@ if __name__ == '__main__':
                     print(f"Running {model} with augmentation color space {inputColorSpace} and criterion color space {criterionColorSpace} and loss {criterion}")
                     # main should return final loss
                     start = time.time()
-                    trainLosses, testLosses, trainAccuracies, testAccuracies = main(model_name = model, lr = 0.0001, reg = 0.0001, epochs = 2, inputColorSpace = inputColorSpace, criterionColorSpace = criterionColorSpace, loss = criterion)
+                    trainLosses, testLosses, trainAccuracies, testAccuracies = main(model_name = model, lr = 0.0001, reg = 0.0001, epochs = 10, inputColorSpace = inputColorSpace, criterionColorSpace = criterionColorSpace, loss = criterion)
                     duration = time.time() - start
 
 
                     x = np.arange(len(trainLosses))
+                    plt.figure()
                     plt.plot(x, trainLosses, label = 'train')
                     plt.plot(x, testLosses, label = 'test')
                     plt.title(f"{model} Loss ({inputColorSpace} augmentation and {criterionColorSpace} {criterion} criterion)")
@@ -47,6 +48,7 @@ if __name__ == '__main__':
                     plt.savefig(lossFilePath)
 
                     x = np.arange(len(trainAccuracies))
+                    plt.figure()
                     plt.plot(x, trainAccuracies, label='train')
                     plt.plot(x, testAccuracies, label='test')
                     plt.title(

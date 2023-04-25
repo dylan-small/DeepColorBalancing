@@ -1,18 +1,21 @@
 from torch.utils.data import Dataset
 import os
-from PIL import Image
+from PIL import Image, ImageFile
 import multiprocess as mp
 import random
 import cv2
 
 def resizeImages(baseDir, newDir, imageShape):
     paths = os.listdir(baseDir)
-
+    ImageFile.LOAD_TRUNCATED_IMAGES = True
     def resizeImage(name):
-        img = Image.open(os.path.join(baseDir, name))
-        resized = img.resize(imageShape, Image.ANTIALIAS)
-        resized.save(os.path.join(newDir, name), 'JPEG', quality=100)
-        print(f'{name} resized to {imageShape}')
+        try:
+            img = Image.open(os.path.join(baseDir, name))
+            resized = img.resize(imageShape, Image.ANTIALIAS)
+            resized.save(os.path.join(newDir, name), 'JPEG', quality=100)
+            print(f'{name} resized to {imageShape}')
+        except Exception:
+            print(f'{name} unable to be resized')
 
     with mp.Pool(None) as p:
         p.map(resizeImage, paths)
